@@ -10,6 +10,10 @@
 // for convenience
 using json = nlohmann::json;
 
+#include <emscripten/bind.h>
+#include <emscripten/val.h>
+#include <emscripten/emscripten.h>
+
 struct Vec
 {                   // Usage: time ./smallpt 5000 && xv image.ppm
     double x, y, z; // position, also color (r,g,b)
@@ -217,7 +221,7 @@ int render(int argc, char *argv[])
     }
 
     std::cout << "write render to file" << std::endl;
-    FILE *f = fopen("image.ppm", "w"); // Write image to PPM file.
+    FILE *f = fopen("/working/image.ppm", "w"); // Write image to PPM file.
     fprintf(f, "P3\n%d %d\n%d\n", w, h, 255);
     for (int i = 0; i < w * h; i++){
         fprintf(f, "%d %d %d ", toInt(c[i].x), toInt(c[i].y), toInt(c[i].z));
@@ -228,6 +232,10 @@ int render(int argc, char *argv[])
 
 int main(int argc, char *argv[]){
     std::cout << "hello from wasm" << std::endl;
+    EM_ASM(
+        FS.mkdir('/working');
+        FS.mount(NODEFS, {root : '.'}, '/working');
+    );
     // first argv is spp (sample per pixel)
     // second argv is scene file
     // if(argc < 3){
