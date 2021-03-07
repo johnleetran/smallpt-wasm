@@ -230,19 +230,40 @@ int render(int argc, char *argv[])
     return 0;
 }
 
+EM_JS(void, MountFilesystem, (const char *repo_root_path), {
+    // inside of emscripten
+    console.log("MountFilesystem c++");
+    FS.mkdir('/working');
+    FS.mount(NODEFS, {root : Module.UTF8ToString(repo_root_path)}, '/working');
+
+    const directory = './';
+    const fs = require('fs');
+
+    fs.readdir(
+        directory, (err, files) => {
+            files.forEach(file => {
+                console.log(file);
+            }
+        );
+    });
+});
+
 int main(int argc, char *argv[]){
     std::cout << "hello from wasm" << std::endl;
-    EM_ASM(
-        FS.mkdir('/working');
-        FS.mount(NODEFS, {root : '.'}, '/working');
-    );
+    
     // first argv is spp (sample per pixel)
     // second argv is scene file
     // if(argc < 3){
     //     std::cout << "Usage error: ./smallpt <SPP> <SCENE_FILE>" << std::endl;
     //     return 1;
     // }
-    // std::string scene_file = argv[2];
+    std::string ssp = argv[1];
+    std::cout << " argv[1]: " << ssp << std::endl;
+
+    std::string scene_file = argv[2];
+    std::cout << " argv[2]: " << scene_file << std::endl;
+
+    MountFilesystem(scene_file.c_str());
     // load_scene(scene_file);
     return render(argc, argv);
 }
