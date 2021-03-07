@@ -3,9 +3,10 @@
 ## build
 
 ```
-mkdir build
-cd build
-cmake ..
-make
-./smallpt 4 ../sample-meshes/cornell.json
+chmod +x ./setup-wasm.sh
+./setup-wasm.sh
 ```
+
+## TODO
+* bind filesystem in node.js and write output to file system
+* node.js to read the sample-meshes config file
