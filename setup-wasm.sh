@@ -21,7 +21,7 @@ emcmake make
 #em++ -g0 libsmallptwasm.a -o smallptwasm.html --bind -lidbfs.js -s ALLOW_MEMORY_GROWTH=1 -s MAXIMUM_MEMORY=4GB #--pre-js pre.js
 
 ### nodejs
-em++ -g0 ibsmallptwasm.a -o smallptwasm.js --bind -lnodefs.js -s ALLOW_MEMORY_GROWTH=1 -s MAXIMUM_MEMORY=4GB #--pre-js pre.js
+em++ -g0 libsmallptwasm.a -o smallptwasm.js --bind -lnodefs.js -s ALLOW_MEMORY_GROWTH=1 -s MAXIMUM_MEMORY=4GB #--pre-js pre.js
 
 ### example from action parsing project
 #em++ -g0 libfilesystem.a -o filesystem.js --bind -lnodefs.js -s ALLOW_MEMORY_GROWTH=1 -s MAXIMUM_MEMORY=4GB --pre-js pre.js
