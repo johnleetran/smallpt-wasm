@@ -1,0 +1,23 @@
+{
+    "Spheres": [
+        {
+            "radius": 1600,
+            "poistion": [
+                3000,
+                0,
+                6000
+            ],
+            "emission": [
+                37.44,
+                33.696,
+                29.952
+            ],
+            "color": [
+                0,
+                0,
+                0
+            ],
+            "reflection_type": "DIFF"
+        }
+    ]
+}
