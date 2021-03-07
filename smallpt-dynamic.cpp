@@ -196,7 +196,10 @@ int render(int argc, char *argv[])
 #pragma omp parallel for schedule(dynamic, 1) private(r) // OpenMP
     for (int y = 0; y < h; y++)
     { // Loop over image rows
-        fprintf(stderr, "\rRendering (%d spp) %5.2f%%", samps * 4, 100. * y / (h - 1));
+        auto spp_info = samps * 4;
+        auto percent_complete = 100.0 * y / (h - 1);
+        std::cout << "spp_info:" << spp_info << " status: " << percent_complete << std::endl;
+        //fprintf(stderr, "\rRendering (%d spp) %5.2f%%", samps * 4, 100. * y / (h - 1));
         for (unsigned short x = 0, Xi[3] = {0, 0, static_cast<unsigned short>(y * y * y)}; x < w; x++) // Loop cols
             for (int sy = 0, i = (h - y - 1) * w + x; sy < 2; sy++)       // 2x2 subpixel rows
                 for (int sx = 0; sx < 2; sx++, r = Vec())
@@ -212,24 +215,26 @@ int render(int argc, char *argv[])
                     c[i] = c[i] + Vec(clamp(r.x), clamp(r.y), clamp(r.z)) * .25;
                 }
     }
+
+    std::cout << "write render to file" << std::endl;
     FILE *f = fopen("image.ppm", "w"); // Write image to PPM file.
     fprintf(f, "P3\n%d %d\n%d\n", w, h, 255);
-    for (int i = 0; i < w * h; i++)
+    for (int i = 0; i < w * h; i++){
         fprintf(f, "%d %d %d ", toInt(c[i].x), toInt(c[i].y), toInt(c[i].z));
-    std::cout << std::endl;
+    }
+    std::cout << "DOne" << std::endl;
     return 0;
 }
 
-#if !__EMSCRIPTEN__
 int main(int argc, char *argv[]){
-    //first argv is spp (sample per pixel)
-    //second argv is scene file
-    if(argc < 3){
-        std::cout << "Usage error: ./smallpt <SPP> <SCENE_FILE>" << std::endl;
-        return 1;
-    }
-    std::string scene_file = argv[2];
-    load_scene(scene_file);
+    std::cout << "hello from wasm" << std::endl;
+    // first argv is spp (sample per pixel)
+    // second argv is scene file
+    // if(argc < 3){
+    //     std::cout << "Usage error: ./smallpt <SPP> <SCENE_FILE>" << std::endl;
+    //     return 1;
+    // }
+    // std::string scene_file = argv[2];
+    // load_scene(scene_file);
     return render(argc, argv);
 }
-#endif
