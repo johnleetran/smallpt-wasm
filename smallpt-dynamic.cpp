@@ -9,11 +9,22 @@
 #include "nlohmann_json.hpp"
 // for convenience
 using json = nlohmann::json;
-
+using namespace std;
+#if __EMSCRIPTEN__
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
 #include <emscripten/emscripten.h>
 
+EM_JS(void, MountFilesystem, (const char *repo_root_path), {
+    // inside of emscripten
+    console.log("MountFilesystem mkdir c++");
+    FS.mkdir("/working");
+
+    console.log("MountFilesystem c++");
+    FS.mount(NODEFS, {root : Module.UTF8ToString(repo_root_path)}, "/working");
+});
+
+#endif //__EMSCRIPTEN__
 struct Vec
 {                   // Usage: time ./smallpt 5000 && xv image.ppm
     double x, y, z; // position, also color (r,g,b)
@@ -60,8 +71,8 @@ struct Sphere
     }
 };
 
-json read_json_file(std::string file_path){
-
+json read_json_file(std::string file_path)
+{
     std::ifstream i(file_path);
     json j;
     i >> j;
@@ -81,28 +92,6 @@ json read_json_file(std::string file_path){
 //     Sphere(600, Vec(50, 681.6 - .27, 81.6), Vec(12, 12, 12), Vec(), DIFF)     //Lite
 // };
 
-Vec Cen(50, 40.8, -860);
-std::vector<Sphere> spheres = {
-    //Scene: radius, position, emission, color, material
-    // center 50 40.8 62
-    // floor 0
-    // back  0
-
-    Sphere(1600, Vec(1, 0, 2) * 3000, Vec(1, .9, .8) * 1.2e1 * 1.56 * 2, Vec(), DIFF),                                    // sun
-    Sphere(1560, Vec(1, 0, 2) * 3500, Vec(1, .5, .05) * 4.8e1 * 1.56 * 2, Vec(), DIFF),                                   // horizon sun2
-                                                                                                                          //   Sphere(10000,Cen+Vec(0,0,-200), Vec(0.0627, 0.188, 0.569)*6e-2*8, Vec(.7,.7,1)*.25,  DIFF), // sky
-    Sphere(10000, Cen + Vec(0, 0, -200), Vec(0.00063842, 0.02001478, 0.28923243) * 6e-2 * 8, Vec(.7, .7, 1) * .25, DIFF), // sky
-
-    Sphere(100000, Vec(50, -100000, 0), Vec(), Vec(.3, .3, .3), DIFF),        // grnd
-    Sphere(110000, Vec(50, -110048.5, 0), Vec(.9, .5, .05) * 4, Vec(), DIFF), // horizon brightener
-    Sphere(4e4, Vec(50, -4e4 - 30, -3000), Vec(), Vec(.2, .2, .2), DIFF),     // mountains
-                                                                              //  Sphere(3.99e4, Vec(50, -3.99e4+20.045, -3000),  Vec(),Vec(.7,.7,.7),DIFF),// mountains snow
-
-    Sphere(26.5, Vec(22, 26.5, 42), Vec(), Vec(1, 1, 1) * .596, SPEC),  // white Mirr
-    Sphere(13, Vec(75, 13, 82), Vec(), Vec(.96, .96, .96) * .96, REFR), // Glas
-    Sphere(22, Vec(87, 22, 24), Vec(), Vec(.6, .6, .6) * .696, REFR)    // Glas2
-};
-
 Refl_t extract_reflection_type(std::string r_type){
     Refl_t reflection_type;
     if (r_type == "DIFF")
@@ -120,18 +109,34 @@ Refl_t extract_reflection_type(std::string r_type){
     return reflection_type;
 }
 
-// std::vector<Sphere> spheres;
-void load_scene(std::string scene_file)
+std::vector<Sphere> spheres;
+void load_scene(std::string scene_data)
 {
-    // json data = read_json_file(scene_file);
-    // for(auto &sphere : data["Spheres"]){
-    //     int radius = sphere["radius"];
-    //     Vec position{sphere["poistion"][0], sphere["poistion"][1], sphere["poistion"][2]};
-    //     Vec emission{sphere["emission"][0], sphere["emission"][1], sphere["emission"][2]};
-    //     Vec color{sphere["color"][0], sphere["color"][1], sphere["color"][2]};
-    //     Refl_t reflection_type = extract_reflection_type(sphere["reflection_type"]);
-    //     spheres.push_back(Sphere(radius, position, emission, color, reflection_type));
-    // }
+    std::cout << "load_scene(std::string scene_data)" << std::endl;
+    std::cout << scene_data << std::endl;
+    json data = json::parse(scene_data); //read_json_file(scene_file);
+
+    std::cout << "dataSpheres" << std::endl;
+    for(auto &sphere : data["Spheres"]){
+        std::cout << "------------------------------------" << std::endl;
+
+        int radius = sphere["radius"];
+        std::cout << "radius: " << radius << std::endl;
+
+        Vec position{sphere["poistion"][0], sphere["poistion"][1], sphere["poistion"][2]};
+        std::cout << "position: " << sphere["poistion"] << std::endl;
+
+        Vec emission{sphere["emission"][0], sphere["emission"][1], sphere["emission"][2]};
+        std::cout << "emission: " << sphere["emission"] << std::endl;
+
+        Vec color{sphere["color"][0], sphere["color"][1], sphere["color"][2]};
+        std::cout << "color: " << sphere["color"] << std::endl;
+
+        Refl_t reflection_type = extract_reflection_type(sphere["reflection_type"]);
+        std::cout << "reflection_type: " << sphere["reflection_type"] << std::endl;
+
+        spheres.push_back(Sphere(radius, position, emission, color, reflection_type));
+    }
 }
 
 inline double clamp(double x) { return x < 0 ? 0 : x > 1 ? 1
@@ -230,40 +235,93 @@ int render(int argc, char *argv[])
     return 0;
 }
 
-EM_JS(void, MountFilesystem, (const char *repo_root_path), {
-    // inside of emscripten
-    console.log("MountFilesystem c++");
-    FS.mkdir('/working');
-    FS.mount(NODEFS, {root : Module.UTF8ToString(repo_root_path)}, '/working');
-
-    const directory = './';
-    const fs = require('fs');
-
-    fs.readdir(
-        directory, (err, files) => {
-            files.forEach(file => {
-                console.log(file);
-            }
-        );
-    });
-});
-
+#if __EMSCRIPTEN__
 int main(int argc, char *argv[]){
     std::cout << "hello from wasm" << std::endl;
-    
-    // first argv is spp (sample per pixel)
-    // second argv is scene file
-    // if(argc < 3){
-    //     std::cout << "Usage error: ./smallpt <SPP> <SCENE_FILE>" << std::endl;
-    //     return 1;
-    // }
+
+    /*****
+    //first argv is spp (sample per pixel)
+    //second argv is scene data
+    if(argc < 3){
+        std::cout << "Usage error: ./smallpt <SPP> <SCENE_DATA>" << std::endl;
+        return 1;
+    }
+    ****/
     std::string ssp = argv[1];
     std::cout << " argv[1]: " << ssp << std::endl;
 
-    std::string scene_file = argv[2];
-    std::cout << " argv[2]: " << scene_file << std::endl;
+    std::string scene_data = argv[2];
+    std::cout << " argv[2]: " << scene_data << std::endl;
 
-    MountFilesystem(scene_file.c_str());
-    // load_scene(scene_file);
+    std::string cur_dir = "./";
+    std::cout << "MountFilesystem: " << cur_dir << std::endl;
+    MountFilesystem(cur_dir.c_str());
+
+    std::cout << "load_scene: " << scene_data << std::endl;
+    load_scene(scene_data);
+
+    std::cout << "render" << std::endl;
     return render(argc, argv);
 }
+#else
+
+json spheresToJson(std::vector<Sphere> spheres)
+{
+    json j;
+    j["Spheres"] = json::array();
+    for(auto& sphere : spheres){
+        json json_object = json::object();
+        json_object["radius"] = sphere.rad;
+        json_object["poistion"] = json::array({sphere.p.x, sphere.p.y, sphere.p.z});
+        json_object["emission"] = json::array({sphere.e.x, sphere.e.y, sphere.e.z});
+        json_object["color"] = json::array({sphere.c.x, sphere.c.y, sphere.c.z});
+        if (sphere.refl == DIFF){
+            json_object["reflection_type"] = "DIFF";
+        }
+        else if (sphere.refl == SPEC)
+        {
+            json_object["reflection_type"] = "SPEC";
+        }else{
+            json_object["reflection_type"] = "REFR";
+        }
+        j["Spheres"].push_back(json_object);
+    }
+    return j;
+}
+
+int main(int argc, char *argv[])
+{
+    Vec tc(0.0588, 0.361, 0.0941);
+    Vec sc = Vec(1, 1, 1) * .7;
+    std::vector<Sphere> spheres = {
+        //Scene: radius, position, emission, color, material
+        // center 50 40.8 62
+        // floor 0
+        // back  0
+        //  Sphere(1e5, Vec(50, 1e5+100, 0),  Vec(1,1,1)*1,Vec(),DIFF), //lite
+        //  Sphere(1e5, Vec(50, -1e5, 0),  Vec(),Vec(.3,.3,.1),DIFF), //grnd
+        //  Sphere(1e5, Vec(50, 1e5+100, 0),  Vec(0.761, 0.875, 1.00)*1.3,Vec(),DIFF),
+        //  //lite
+        Sphere(1e5, Vec(50, 1e5 + 130, 0), Vec(1, 1, 1) * 1.3, Vec(), DIFF), //lite
+        Sphere(1e2, Vec(50, -1e2 + 2, 47), Vec(), Vec(1, 1, 1) * .7, DIFF),  //grnd
+
+        Sphere(1e4, Vec(50, -30, 300) + Vec(-sin(50 * M_PI / 180), 0, cos(50 * M_PI / 180)) * 1e4, Vec(), Vec(1, 1, 1) * .99, SPEC),  // mirr L
+        Sphere(1e4, Vec(50, -30, 300) + Vec(sin(50 * M_PI / 180), 0, cos(50 * M_PI / 180)) * 1e4, Vec(), Vec(1, 1, 1) * .99, SPEC),   // mirr R
+        Sphere(1e4, Vec(50, -30, -50) + Vec(-sin(30 * M_PI / 180), 0, -cos(30 * M_PI / 180)) * 1e4, Vec(), Vec(1, 1, 1) * .99, SPEC), // mirr FL
+        Sphere(1e4, Vec(50, -30, -50) + Vec(sin(30 * M_PI / 180), 0, -cos(30 * M_PI / 180)) * 1e4, Vec(), Vec(1, 1, 1) * .99, SPEC),  // mirr
+
+        Sphere(4, Vec(50, 6 * .6, 47), Vec(), Vec(.13, .066, .033), DIFF),                   //"tree"
+        Sphere(16, Vec(50, 6 * 2 + 16 * .6, 47), Vec(), tc, DIFF),                           //"tree"
+        Sphere(11, Vec(50, 6 * 2 + 16 * .6 * 2 + 11 * .6, 47), Vec(), tc, DIFF),             //"tree"
+        Sphere(7, Vec(50, 6 * 2 + 16 * .6 * 2 + 11 * .6 * 2 + 7 * .6, 47), Vec(), tc, DIFF), //"tree"
+
+        Sphere(15.5, Vec(50, 1.8 + 6 * 2 + 16 * .6, 47), Vec(), sc, DIFF),                           //"tree"
+        Sphere(10.5, Vec(50, 1.8 + 6 * 2 + 16 * .6 * 2 + 11 * .6, 47), Vec(), sc, DIFF),             //"tree"
+        Sphere(6.5, Vec(50, 1.8 + 6 * 2 + 16 * .6 * 2 + 11 * .6 * 2 + 7 * .6, 47), Vec(), sc, DIFF), //"tree"
+    };
+
+    json j = spheresToJson(spheres);
+
+    std::cout << j << std::endl;
+}
+#endif //__EMSCRIPTEN__
