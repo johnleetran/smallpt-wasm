@@ -1,174 +1,174 @@
 {
     "Spheres": [
         {
+            "radius": 100000,
+            "poistion": [
+                100001,
+                40.8,
+                81.6
+            ],
+            "emission": [
+                0,
+                0,
+                0
+            ],
             "color": [
                 0.75,
                 0.25,
                 0.25
             ],
-            "emission": [
-                0.0,
-                0.0,
-                0.0
-            ],
-            "poistion": [
-                100001.0,
-                40.8,
-                81.6
-            ],
-            "radius": 100000.0,
             "reflection_type": "DIFF"
         },
         {
+            "radius": 100000,
+            "poistion": [
+                -99901,
+                40.8,
+                81.6
+            ],
+            "emission": [
+                0,
+                0,
+                0
+            ],
             "color": [
                 0.25,
                 0.25,
                 0.75
             ],
-            "emission": [
-                0.0,
-                0.0,
-                0.0
-            ],
+            "reflection_type": "DIFF"
+        },
+        {
+            "radius": 100000,
             "poistion": [
-                -99901.0,
+                50,
                 40.8,
+                100000
+            ],
+            "emission": [
+                0,
+                0,
+                0
+            ],
+            "color": [
+                0.75,
+                0.75,
+                0.75
+            ],
+            "reflection_type": "DIFF"
+        },
+        {
+            "radius": 100000,
+            "poistion": [
+                50,
+                40.8,
+                -99830
+            ],
+            "emission": [
+                0,
+                0,
+                0
+            ],
+            "color": [
+                0,
+                0,
+                0
+            ],
+            "reflection_type": "DIFF"
+        },
+        {
+            "radius": 100000,
+            "poistion": [
+                50,
+                100000,
                 81.6
             ],
-            "radius": 100000.0,
-            "reflection_type": "DIFF"
-        },
-        {
+            "emission": [
+                0,
+                0,
+                0
+            ],
             "color": [
                 0.75,
                 0.75,
                 0.75
             ],
-            "emission": [
-                0.0,
-                0.0,
-                0.0
-            ],
-            "poistion": [
-                50.0,
-                40.8,
-                100000.0
-            ],
-            "radius": 100000.0,
             "reflection_type": "DIFF"
         },
         {
-            "color": [
-                0.0,
-                0.0,
-                0.0
-            ],
-            "emission": [
-                0.0,
-                0.0,
-                0.0
-            ],
+            "radius": 100000,
             "poistion": [
-                50.0,
-                40.8,
-                -99830.0
-            ],
-            "radius": 100000.0,
-            "reflection_type": "DIFF"
-        },
-        {
-            "color": [
-                0.75,
-                0.75,
-                0.75
-            ],
-            "emission": [
-                0.0,
-                0.0,
-                0.0
-            ],
-            "poistion": [
-                50.0,
-                100000.0,
-                81.6
-            ],
-            "radius": 100000.0,
-            "reflection_type": "DIFF"
-        },
-        {
-            "color": [
-                0.75,
-                0.75,
-                0.75
-            ],
-            "emission": [
-                0.0,
-                0.0,
-                0.0
-            ],
-            "poistion": [
-                50.0,
+                50,
                 -99918.4,
                 81.6
             ],
-            "radius": 100000.0,
+            "emission": [
+                0,
+                0,
+                0
+            ],
+            "color": [
+                0.75,
+                0.75,
+                0.75
+            ],
             "reflection_type": "DIFF"
         },
         {
+            "radius": 16.5,
+            "poistion": [
+                27,
+                16.5,
+                47
+            ],
+            "emission": [
+                0,
+                0,
+                0
+            ],
             "color": [
                 0.999,
                 0.999,
                 0.999
             ],
-            "emission": [
-                0.0,
-                0.0,
-                0.0
-            ],
-            "poistion": [
-                27.0,
-                16.5,
-                47.0
-            ],
-            "radius": 16.5,
             "reflection_type": "SPEC"
         },
         {
+            "radius": 16.5,
+            "poistion": [
+                73,
+                16.5,
+                78
+            ],
+            "emission": [
+                0,
+                0,
+                0
+            ],
             "color": [
                 0.999,
                 0.999,
                 0.999
             ],
-            "emission": [
-                0.0,
-                0.0,
-                0.0
-            ],
-            "poistion": [
-                73.0,
-                16.5,
-                78.0
-            ],
-            "radius": 16.5,
             "reflection_type": "REFR"
         },
         {
-            "color": [
-                0.0,
-                0.0,
-                0.0
-            ],
-            "emission": [
-                400.0,
-                400.0,
-                400.0
-            ],
+            "radius": 600,
             "poistion": [
-                50.0,
-                65.1,
+                50,
+                681.33,
                 81.6
             ],
-            "radius": 1.5,
+            "emission": [
+                12,
+                12,
+                12
+            ],
+            "color": [
+                0,
+                0,
+                0
+            ],
             "reflection_type": "DIFF"
         }
     ]

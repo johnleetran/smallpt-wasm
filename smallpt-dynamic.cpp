@@ -79,19 +79,6 @@ json read_json_file(std::string file_path)
     return j;
 }
 
-// Sphere spheres[] = {
-//     //Scene: radius, position, emission, color, material
-//     Sphere(1e5, Vec(1e5 + 1, 40.8, 81.6), Vec(), Vec(.75, .25, .25), DIFF),   //Left
-//     Sphere(1e5, Vec(-1e5 + 99, 40.8, 81.6), Vec(), Vec(.25, .25, .75), DIFF), //Rght
-//     Sphere(1e5, Vec(50, 40.8, 1e5), Vec(), Vec(.75, .75, .75), DIFF),         //Back
-//     Sphere(1e5, Vec(50, 40.8, -1e5 + 170), Vec(), Vec(), DIFF),               //Frnt
-//     Sphere(1e5, Vec(50, 1e5, 81.6), Vec(), Vec(.75, .75, .75), DIFF),         //Botm
-//     Sphere(1e5, Vec(50, -1e5 + 81.6, 81.6), Vec(), Vec(.75, .75, .75), DIFF), //Top
-//     Sphere(16.5, Vec(27, 16.5, 47), Vec(), Vec(1, 1, 1) * .999, SPEC),        //Mirr
-//     Sphere(16.5, Vec(73, 16.5, 78), Vec(), Vec(1, 1, 1) * .999, REFR),        //Glas
-//     Sphere(600, Vec(50, 681.6 - .27, 81.6), Vec(12, 12, 12), Vec(), DIFF)     //Lite
-// };
-
 Refl_t extract_reflection_type(std::string r_type){
     Refl_t reflection_type;
     if (r_type == "DIFF")
@@ -197,9 +184,10 @@ Vec radiance(const Ray &r, int depth, unsigned short *Xi)
                                                        : radiance(Ray(x, tdir), depth, Xi) * TP)
                                     : radiance(reflRay, depth, Xi) * Re + radiance(Ray(x, tdir), depth, Xi) * Tr);
 }
-int render(int argc, char *argv[])
+int render(int spp)
 {
-    int w = 1024, h = 768, samps = argc >= 2 ? atoi(argv[1]) / 4 : 1; // # samples
+    int w = 1024, h = 768;
+    int samps = spp / 4;                                                  // # samples
     Ray cam(Vec(50, 52, 295.6), Vec(0, -0.042612, -1).norm());        // cam pos, dir
     Vec cx = Vec(w * .5135 / h), cy = (cx % cam.d).norm() * .5135, r, *c = new Vec[w * h];
 #pragma omp parallel for schedule(dynamic, 1) private(r) // OpenMP
@@ -226,19 +214,43 @@ int render(int argc, char *argv[])
     }
 
     std::cout << "write render to file" << std::endl;
+#if __EMSCRIPTEN__
+    std::cout << "/working/image.ppm" << std::endl;
     FILE *f = fopen("/working/image.ppm", "w"); // Write image to PPM file.
+#else
+    std::cout << "image.ppm" << std::endl;
+    FILE *f = fopen("image.ppm", "w"); // Write image to PPM file.
+#endif //__EMSCRIPTEN__
     fprintf(f, "P3\n%d %d\n%d\n", w, h, 255);
     for (int i = 0; i < w * h; i++){
         fprintf(f, "%d %d %d ", toInt(c[i].x), toInt(c[i].y), toInt(c[i].z));
     }
+    fclose(f);
     std::cout << "DOne" << std::endl;
     return 0;
 }
 
 #if __EMSCRIPTEN__
-int main(int argc, char *argv[]){
-    std::cout << "hello from wasm" << std::endl;
 
+int renderJS(int spp, std::string scene_data)
+{
+    std::cout << "hello from renderJS" << std::endl;
+    std::cout << " argv[1]: " << spp << std::endl;
+
+    std::string cur_dir = "./";
+    std::cout << "MountFilesystem: " << cur_dir << std::endl;
+    MountFilesystem(cur_dir.c_str());
+
+    std::cout << "load_scene" << std::endl;
+    load_scene(scene_data);
+
+    std::cout << "render" << std::endl;
+    int ret = render(spp);
+    return ret;
+}
+
+int main(int argc, char *argv[]){
+    std::cout << "hello from wasm main function" << std::endl;
     /*****
     //first argv is spp (sample per pixel)
     //second argv is scene data
@@ -247,22 +259,28 @@ int main(int argc, char *argv[]){
         return 1;
     }
     ****/
-    std::string ssp = argv[1];
-    std::cout << " argv[1]: " << ssp << std::endl;
+    // std::string ssp = argv[1];
+    // std::cout << " argv[1]: " << ssp << std::endl;
 
-    std::string scene_data = argv[2];
-    std::cout << " argv[2]: " << scene_data << std::endl;
+    // std::string scene_data = argv[2];
+    // std::cout << " argv[2]: " << scene_data << std::endl;
 
-    std::string cur_dir = "./";
-    std::cout << "MountFilesystem: " << cur_dir << std::endl;
-    MountFilesystem(cur_dir.c_str());
+    // std::string cur_dir = "./";
+    // std::cout << "MountFilesystem: " << cur_dir << std::endl;
+    // MountFilesystem(cur_dir.c_str());
 
-    std::cout << "load_scene: " << scene_data << std::endl;
-    load_scene(scene_data);
+    // std::cout << "load_scene: " << scene_data << std::endl;
+    // load_scene(scene_data);
 
-    std::cout << "render" << std::endl;
-    return render(argc, argv);
+    // std::cout << "render" << std::endl;
+    // return render(spp);
 }
+
+EMSCRIPTEN_BINDINGS(renderJS)
+{
+    emscripten::function("renderJS", &renderJS);
+}
+
 #else
 
 json spheresToJson(std::vector<Sphere> spheres)
@@ -291,37 +309,26 @@ json spheresToJson(std::vector<Sphere> spheres)
 
 int main(int argc, char *argv[])
 {
-    Vec tc(0.0588, 0.361, 0.0941);
-    Vec sc = Vec(1, 1, 1) * .7;
-    std::vector<Sphere> spheres = {
-        //Scene: radius, position, emission, color, material
-        // center 50 40.8 62
-        // floor 0
-        // back  0
-        //  Sphere(1e5, Vec(50, 1e5+100, 0),  Vec(1,1,1)*1,Vec(),DIFF), //lite
-        //  Sphere(1e5, Vec(50, -1e5, 0),  Vec(),Vec(.3,.3,.1),DIFF), //grnd
-        //  Sphere(1e5, Vec(50, 1e5+100, 0),  Vec(0.761, 0.875, 1.00)*1.3,Vec(),DIFF),
-        //  //lite
-        Sphere(1e5, Vec(50, 1e5 + 130, 0), Vec(1, 1, 1) * 1.3, Vec(), DIFF), //lite
-        Sphere(1e2, Vec(50, -1e2 + 2, 47), Vec(), Vec(1, 1, 1) * .7, DIFF),  //grnd
+    std::cout << "hello from wasm" << std::endl;
 
-        Sphere(1e4, Vec(50, -30, 300) + Vec(-sin(50 * M_PI / 180), 0, cos(50 * M_PI / 180)) * 1e4, Vec(), Vec(1, 1, 1) * .99, SPEC),  // mirr L
-        Sphere(1e4, Vec(50, -30, 300) + Vec(sin(50 * M_PI / 180), 0, cos(50 * M_PI / 180)) * 1e4, Vec(), Vec(1, 1, 1) * .99, SPEC),   // mirr R
-        Sphere(1e4, Vec(50, -30, -50) + Vec(-sin(30 * M_PI / 180), 0, -cos(30 * M_PI / 180)) * 1e4, Vec(), Vec(1, 1, 1) * .99, SPEC), // mirr FL
-        Sphere(1e4, Vec(50, -30, -50) + Vec(sin(30 * M_PI / 180), 0, -cos(30 * M_PI / 180)) * 1e4, Vec(), Vec(1, 1, 1) * .99, SPEC),  // mirr
+    /*****
+    //first argv is spp (sample per pixel)
+    //second argv is scene data
+    if(argc < 3){
+        std::cout << "Usage error: ./smallpt <spp> <SCENE_DATA>" << std::endl;
+        return 1;
+    }
+    ****/
+    std::string spp = argv[1];
+    std::cout << " argv[1]: " << spp << std::endl;
 
-        Sphere(4, Vec(50, 6 * .6, 47), Vec(), Vec(.13, .066, .033), DIFF),                   //"tree"
-        Sphere(16, Vec(50, 6 * 2 + 16 * .6, 47), Vec(), tc, DIFF),                           //"tree"
-        Sphere(11, Vec(50, 6 * 2 + 16 * .6 * 2 + 11 * .6, 47), Vec(), tc, DIFF),             //"tree"
-        Sphere(7, Vec(50, 6 * 2 + 16 * .6 * 2 + 11 * .6 * 2 + 7 * .6, 47), Vec(), tc, DIFF), //"tree"
+    std::string scene_data = argv[2];
+    std::cout << " argv[2]: " << scene_data << std::endl;
 
-        Sphere(15.5, Vec(50, 1.8 + 6 * 2 + 16 * .6, 47), Vec(), sc, DIFF),                           //"tree"
-        Sphere(10.5, Vec(50, 1.8 + 6 * 2 + 16 * .6 * 2 + 11 * .6, 47), Vec(), sc, DIFF),             //"tree"
-        Sphere(6.5, Vec(50, 1.8 + 6 * 2 + 16 * .6 * 2 + 11 * .6 * 2 + 7 * .6, 47), Vec(), sc, DIFF), //"tree"
-    };
+    std::cout << "load_scene: " << scene_data << std::endl;
+    load_scene(scene_data);
 
-    json j = spheresToJson(spheres);
-
-    std::cout << j << std::endl;
+    std::cout << "render" << std::endl;
+    return render(atoi(spp.c_str()));
 }
 #endif //__EMSCRIPTEN__
