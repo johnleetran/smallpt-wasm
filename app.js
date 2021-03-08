@@ -1,10 +1,11 @@
 const fs = require('fs');
-let smallptwasm = require('./smallptwasm')
-async function main() {
+let smallptwasm = require('./build/smallptwasm')
+async function main(spp, sceneFile) {
     let a = await smallptwasm();
-    let sceneData = fs.readFileSync("../sample-meshes/cornell.json");
-    await a.renderJS(4, sceneData);
-    console.log("here the bean yo")
+    let sceneData = fs.readFileSync(sceneFile);
+    await a.renderJS(spp, sceneData);
 }
 
-main();
+let spp = process.argv[2] || 4
+let sceneFile = process.argv[3] || "./sample-meshes/cornell.json"
+main(spp, sceneFile);

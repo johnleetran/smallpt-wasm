@@ -12,7 +12,6 @@ mkdir -p build
 set -eux
 # cp index.html build/index.html
 # cp pre.js  build/pre.js
-cp app.js  build/app.js
 
 cd build
 emcmake cmake ..

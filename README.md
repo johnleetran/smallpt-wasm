@@ -10,7 +10,7 @@ chmod +x ./setup-wasm.sh
 ## to run
 ```
 cd build
-node smallptwasm.js 4 "$(cat ../sample-meshes/cornell.json)"
+node app.js 4 "$(cat ../sample-meshes/cornell.json)"
 ```
 
 ## TODO
